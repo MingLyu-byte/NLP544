@@ -4,11 +4,12 @@ import string
 
 # Global Var
 lable_class = [("negative", "deceptive"), ("negative", "truthful"), ("positive", "deceptive"), ("positive", "truthful")]
+lable_class2 = ["positive", "negative", "truthful", "deceptive"]
 stop_words = ["the", 'a', "to", "and", "or", " "]
 
 
 # read the model first line is log prior, the rest are log prior likelihood for each word in the training set
-def read_model(path):
+def read_model(path,lable_class):
     f = open(path, 'r')
     log_prior = {}
     log_likelihood = {}
@@ -46,14 +47,12 @@ def process_reivew(review):
 
 
 # classify documents and write to output file
-def classify_single(output, path, log_prior, log_likelihood):
-    p = {}
-
-    for key in log_prior.keys():
-        p[key] = log_prior[key]
-
+def classify_single(output, path, log_prior, log_likelihood,lable_class):
     for file in os.listdir(path):
         if os.path.isfile(os.path.join(path, file)):
+            p = {}
+            for key in log_prior.keys():
+                p[key] = log_prior[key]
             file_path = os.path.join(path, file)
             f = open(file_path)
             content = f.readlines()
@@ -62,17 +61,32 @@ def classify_single(output, path, log_prior, log_likelihood):
                 for word in review:
                     if word in log_likelihood:
                         word_di = log_likelihood[word]
-                        for key in p:
+                        for key in p.keys():
                             p[key] += word_di[key]
 
-            predict_label = max(p, key=lambda key: p[key])
-            output_line = predict_label[1] + " " + predict_label[0] + " " + file_path + "\n"
+            if "positive" in lable_class:
+                if p["positive"] > p["negative"]:
+                    label2 = "positive"
+                else:
+                    label2 = "negative"
+
+                if p["deceptive"] > p["truthful"]:
+                    label1 = "deceptive"
+                else:
+                    label1 = "truthful"
+
+                output_line = label1 + " " + label2 + " " + file_path + "\n"
+
+            else:
+                predict_label = max(p, key=lambda key: p[key])
+                output_line = predict_label[1] + " " + predict_label[0] + " " + file_path + "\n"
+
             output.write(output_line)
 
     f.close()
 
 
-def classify_all(input, log_prior, log_likelihood):
+def classify_all(input, log_prior, log_likelihood, label_class):
     output = open("nboutput.txt", "w")
     for dir in os.listdir(input):
         if not os.path.isfile(os.path.join(input, dir)):
@@ -83,10 +97,10 @@ def classify_all(input, log_prior, log_likelihood):
                     for sub_fold_dir in os.listdir(sub_folder_directories):
                         if not os.path.isfile(os.path.join(sub_folder_directories, sub_fold_dir)):
                             sub_fold_dir_path = os.path.join(sub_folder_directories, sub_fold_dir)
-                            classify_single(output, sub_fold_dir_path, log_prior, log_likelihood)
+                            classify_single(output, sub_fold_dir_path, log_prior, log_likelihood,label_class)
 
 
 if __name__ == '__main__':
-    input = sys.argv[1]
-    log_prior, log_likelihood = read_model("nbmodel.txt")
-    classify_all(input, log_prior, log_likelihood)
+    input_data = sys.argv[1]
+    log_prior, log_likelihood = read_model("nbmodel.txt",lable_class)
+    classify_all(input_data, log_prior, log_likelihood, lable_class)

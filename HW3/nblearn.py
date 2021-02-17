@@ -3,14 +3,18 @@ import os
 import math
 import string
 from sklearn.metrics import f1_score
+from nltk.corpus import stopwords
 
 # Global Var
-stop_words = ["the", 'a', "to", "and", "or", "between", "an", "both", "but"]
+# stop_words = ["the", 'a', "to", "and", "or", "between", "an", "both", "but"]
+stop_words = list(stopwords.words('english'))
 vocab_dict = {}
 label_count = {}
 lable_class = [("negative", "deceptive"), ("negative", "truthful"), ("positive", "deceptive"), ("positive", "truthful")]
-lable_class_dict = {("negative", "deceptive"):1,("negative", "truthful"):2,("positive", "deceptive"):3,
-                    ("positive", "truthful"):4}
+lable_class_dict = {("negative", "deceptive"): 1, ("negative", "truthful"): 2, ("positive", "deceptive"): 3,
+                    ("positive", "truthful"): 4}
+lable_class2 = ["positive", "negative", "truthful", "deceptive"]
+
 
 def read_file_train(input, dict):
     for dir in os.listdir(input):
@@ -25,6 +29,11 @@ def read_file_train(input, dict):
 
 
 def read_file_all(input, dict):
+    '''
+    :param input: 
+    :param dict:
+    :return:
+    '''
     for dir in os.listdir(input):
         if not os.path.isfile(os.path.join(input, dir)):
             sub_directories = os.path.join(input, dir)
@@ -39,11 +48,65 @@ def read_file_all(input, dict):
                                              label_name_1, label_name_2, dict)
 
 
-def train_naive_bayes(dict):
+def train_naive_bayes_2_class(dict):
+    '''
+
+    :param dict:
+    :return:
+    '''
     N_nd = N_nt = N_pd = N_pt = 0
     log_likelihood = {}
     log_prior = {}
-    vocab = set([pair[0] for pair in dict.keys()])
+    vocab = [pair[0] for pair in dict.keys()]
+    V = len(vocab)
+
+    # log likelihood total count
+    for pair in dict:
+        if pair[1] == "negative":
+            if pair[2] == "deceptive":
+                N_nd += dict[pair]
+            else:
+                N_nt += dict[pair]
+        else:
+            if pair[2] == "deceptive":
+                N_pd += dict[pair]
+            else:
+                N_pt += dict[pair]
+
+    # log prior
+    count_sum = sum(label_count.values())
+    log_prior['positive'] = math.log2(N_pd + N_pt) - math.log2(count_sum)
+    log_prior['negative'] = math.log2(N_nd + N_nt) - math.log2(count_sum)
+    log_prior['deceptive'] = math.log2(N_pd + N_nd) - math.log2(count_sum)
+    log_prior['truthful'] = math.log2(N_pt + N_nt) - math.log2(count_sum)
+
+    # log likelihood probability for each word
+    for word in vocab:
+        freq_nd = dict.get((word, "negative", "deceptive"), 0)
+        freq_nt = dict.get((word, "negative", "truthful"), 0)
+        freq_pd = dict.get((word, "positive", "deceptive"), 0)
+        freq_pt = dict.get((word, "positive", "truthful"), 0)
+
+        p_n = (freq_nd + freq_nt + 1) / (N_nd + N_nt + V)
+        p_p = (freq_pd + freq_pt + 1) / (N_pd + N_pt + V)
+        p_d = (freq_pd + freq_nd + 1) / (N_pd + N_nd + V)
+        p_t = (freq_pt + freq_nt + 1) / (N_pt + N_nt + V)
+
+        log_likelihood[word] = {"negative": math.log2(p_n), "truthful": math.log2(p_t),
+                                "positive": math.log2(p_p), "deceptive": math.log2(p_d)}
+
+    return log_prior, log_likelihood
+
+
+def train_naive_bayes_4_class(dict):
+    '''
+    :param dict:
+    :return:
+    '''
+    N_nd = N_nt = N_pd = N_pt = 0
+    log_likelihood = {}
+    log_prior = {}
+    vocab = [pair[0] for pair in dict.keys()]
     V = len(vocab)
 
     # log prior
@@ -72,10 +135,10 @@ def train_naive_bayes(dict):
         freq_pd = dict.get((word, "positive", "deceptive"), 0)
         freq_pt = dict.get((word, "positive", "truthful"), 0)
 
-        p_nd = (freq_nd + 1) / (N_nd + V)
-        p_nt = (freq_nt + 1) / (N_nt + V)
-        p_pd = (freq_pd + 1) / (N_pd + V)
-        p_pt = (freq_pt + 1) / (N_pt + V)
+        p_nd = (freq_nd + 1) / (N_nd + 1 * V)
+        p_nt = (freq_nt + 1) / (N_nt + 1 * V)
+        p_pd = (freq_pd + 1) / (N_pd + 1 * V)
+        p_pt = (freq_pt + 1) / (N_pt + 1 * V)
 
         log_likelihood[word] = {("negative", "deceptive"): math.log2(p_nd), ("negative", "truthful"): math.log2(p_nt),
                                 ("positive", "deceptive"): math.log2(p_pd), ("positive", "truthful"): math.log2(p_pt)}
@@ -83,14 +146,14 @@ def train_naive_bayes(dict):
     return log_prior, log_likelihood
 
 
-def naive_bayes_predict(path, logprior, loglikelihood, correct_label,predicted,answer):
+def naive_bayes_predict(path, logprior, loglikelihood, correct_label, predicted, answer):
     count = 0
     correct = 0
-    p = {}
-    for key in logprior.keys():
-        p[key] = logprior[key]
 
     for file in os.listdir(path):
+        p = {}
+        for key in logprior.keys():
+            p[key] = logprior[key]
         count += 1
         f = open(os.path.join(path, file))
         content = f.readlines()
@@ -107,12 +170,11 @@ def naive_bayes_predict(path, logprior, loglikelihood, correct_label,predicted,a
         answer.append(lable_class_dict[correct_label])
         if predict_label == correct_label:
             correct += 1
-
     print(correct_label, ":", float(correct) / float(count))
 
 
 # write out method to store the model
-def write_out(log_prior, log_likelihood):
+def write_out(log_prior, log_likelihood, lable_class):
     f = open("nbmodel.txt", "w")
     lable_prior = [str(log_prior[lable_class[i]]) for i in range(len(lable_class))]
     output = ",".join(lable_prior) + "\n"
@@ -144,7 +206,7 @@ def count_all_review(path, label1, label2, dict):
     for dir in os.listdir(path):
         if os.path.isfile(os.path.join(path, dir)):
             fold_path = os.path.join(path, dir)
-            f = open(fold_path,"r")
+            f = open(fold_path, "r")
             content = f.readlines()
             label_count[(label1, label2)] = label_count.get((label1, label2), 0) + 1
             for line in content:
@@ -174,23 +236,52 @@ def process_reivew(review):
     return review_clean
 
 
+def count_words(dict):
+    vocab = set([pair[0] for pair in dict.keys()])
+    count_dict = {}
+    for key in dict.keys():
+        word = key[0]
+        count_dict[word] = count_dict.get(word, 0) + dict[key]
+
+    return count_dict
+
+
+def remove_freq(dict):
+    count_dict = count_words(dict)
+    most_common_list = sorted(count_dict.keys(), reverse=True)[:20]
+    most_uncommon_list = sorted(count_dict.keys())[:15]
+    for key in most_common_list:
+        del count_dict[key]
+    for key in most_uncommon_list:
+        del count_dict[key]
+
+    return count_dict.keys()
+
+
 if __name__ == '__main__':
     input = sys.argv[1]
+    read_file_train(input, vocab_dict)
+    most_common_list = sorted(vocab_dict.keys(), reverse=True)[:5]
+    most_uncommon_list = sorted(vocab_dict.keys())[:5]
+    for key in most_common_list:
+        del vocab_dict[key]
+    for key in most_uncommon_list:
+        del vocab_dict[key]
+    log_prior, log_likelihood = train_naive_bayes_4_class(vocab_dict)
+    log_prior2, log_likelihood2 = train_naive_bayes_2_class(vocab_dict)
     predicted = []
     answer = []
-    read_file_all(input, vocab_dict)
-    log_prior, log_likelihood = train_naive_bayes(vocab_dict)
     naive_bayes_predict("C:/Users/Lyu/PycharmProjects/NLP544/HW3/op_spam_training_data"
                         "/positive_polarity/truthful_from_TripAdvisor/fold1", log_prior, log_likelihood,
-                        ("positive", "truthful"),predicted,answer)
+                        ("positive", "truthful"), predicted, answer)
     naive_bayes_predict("C:/Users/Lyu/PycharmProjects/NLP544/HW3/op_spam_training_data"
                         "/positive_polarity/deceptive_from_MTurk/fold1", log_prior, log_likelihood,
-                        ("positive", "deceptive"),predicted,answer)
+                        ("positive", "deceptive"), predicted, answer)
     naive_bayes_predict("C:/Users/Lyu/PycharmProjects/NLP544/HW3/op_spam_training_data"
                         "/negative_polarity/deceptive_from_MTurk/fold1", log_prior, log_likelihood,
-                        ("negative", "deceptive"),predicted,answer)
+                        ("negative", "deceptive"), predicted, answer)
     naive_bayes_predict("C:/Users/Lyu/PycharmProjects/NLP544/HW3/op_spam_training_data"
                         "/negative_polarity/truthful_from_Web/fold1", log_prior, log_likelihood,
-                        ("negative", "truthful"),predicted,answer)
-    write_out(log_prior, log_likelihood)
-    print("macro f1:",f1_score(answer, predicted, average='macro'))
+                        ("negative", "truthful"), predicted, answer)
+    write_out(log_prior, log_likelihood, lable_class)
+    print("f1 score:",f1_score(answer,predicted,average = "macro"))
