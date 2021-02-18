@@ -55,7 +55,7 @@ def generate_input_from_review(num, sub_folder_directories, word_list, label_nam
 
 
 def transform_review_as_feature(word_list, word_feature_list, input_matrix):
-    temp = [0 for i in range(1000)]
+    temp = [0 for i in range(1500)]
     for word in word_list:
         if word in word_feature_list:
             index = word_feature_list.index(word)
@@ -88,7 +88,7 @@ def add_word(word_list, dict):
 
 # Extract the most frequent 1000 words as features
 def extract_feature_words(dict):
-    return sorted(dict, key=lambda k: dict[k], reverse=True)[:1000]
+    return sorted(dict, key=lambda k: dict[k], reverse=True)[:1500]
 
 
 # Tokenize the sentence into word list "I love you" -> ["I","love","you"]
@@ -144,7 +144,7 @@ def model_test(W_pn, b_pn, W_dt, b_dt, input_path, label1, label2, word_feature_
     count = 0
     correct = 0
     for file in os.listdir(input_path):
-        temp = [0 for i in range(1000)]
+        temp = [0 for i in range(1500)]
         count += 1
         f = open(os.path.join(input_path, file))
         content = f.readlines()
@@ -180,26 +180,26 @@ if __name__ == '__main__':
     read_file_train(input, vocab_dict)
     word_list = extract_feature_words(vocab_dict)
     generate_input_matrix(word_list, input_matrix, input, label_pn, label_dt)
-    W_v_pn, b_v_pn = vanilla_perceptron_train(np.array(input_matrix), np.array(label_pn), 300)
-    W_v_dt, b_v_dt = vanilla_perceptron_train(np.array(input_matrix), np.array(label_dt), 300)
-    W_a_pn, b_a_pn = average_perceptron_train(np.array(input_matrix), np.array(label_pn), 300)
-    W_a_dt, b_a_dt = average_perceptron_train(np.array(input_matrix), np.array(label_dt), 300)
-    model_test(W_v_pn, b_v_pn, W_v_dt, b_v_dt, "C:/Users/lyum/PycharmProjects/NLP544/HW3/op_spam_training_data"
+    W_v_pn, b_v_pn = vanilla_perceptron_train(np.array(input_matrix), np.array(label_pn), 200)
+    W_v_dt, b_v_dt = vanilla_perceptron_train(np.array(input_matrix), np.array(label_dt), 200)
+    W_a_pn, b_a_pn = average_perceptron_train(np.array(input_matrix), np.array(label_pn), 200)
+    W_a_dt, b_a_dt = average_perceptron_train(np.array(input_matrix), np.array(label_dt), 200)
+    model_test(W_v_pn, b_v_pn, W_v_dt, b_v_dt, "op_spam_training_data"
                                                "/positive_polarity/truthful_from_TripAdvisor/fold1", 1, 1, word_list)
-    model_test(W_v_pn, b_v_pn, W_v_dt, b_v_dt, "C:/Users/lyum/PycharmProjects/NLP544/HW3/op_spam_training_data"
+    model_test(W_v_pn, b_v_pn, W_v_dt, b_v_dt, "op_spam_training_data"
                                                "/positive_polarity/deceptive_from_MTurk/fold1", 1, -1, word_list)
-    model_test(W_v_pn, b_v_pn, W_v_dt, b_v_dt, "C:/Users/lyum/PycharmProjects/NLP544/HW3/op_spam_training_data"
+    model_test(W_v_pn, b_v_pn, W_v_dt, b_v_dt, "op_spam_training_data"
                                                "/negative_polarity/deceptive_from_MTurk/fold1", -1, -1, word_list)
-    model_test(W_v_pn, b_v_pn, W_v_dt, b_v_dt, "C:/Users/lyum/PycharmProjects/NLP544/HW3/op_spam_training_data"
+    model_test(W_v_pn, b_v_pn, W_v_dt, b_v_dt, "op_spam_training_data"
                                                "/negative_polarity/truthful_from_Web/fold1", -1, 1, word_list)
 
-    model_test(W_a_pn, b_a_pn, W_a_dt, b_a_dt, "C:/Users/lyum/PycharmProjects/NLP544/HW3/op_spam_training_data"
+    model_test(W_a_pn, b_a_pn, W_a_dt, b_a_dt, "op_spam_training_data"
                                                "/positive_polarity/truthful_from_TripAdvisor/fold1", 1, 1, word_list)
-    model_test(W_a_pn, b_a_pn, W_a_dt, b_a_dt, "C:/Users/lyum/PycharmProjects/NLP544/HW3/op_spam_training_data"
+    model_test(W_a_pn, b_a_pn, W_a_dt, b_a_dt, "op_spam_training_data"
                                                "/positive_polarity/deceptive_from_MTurk/fold1", 1, -1, word_list)
-    model_test(W_a_pn, b_a_pn, W_a_dt, b_a_dt, "C:/Users/lyum/PycharmProjects/NLP544/HW3/op_spam_training_data"
+    model_test(W_a_pn, b_a_pn, W_a_dt, b_a_dt, "op_spam_training_data"
                                                "/negative_polarity/deceptive_from_MTurk/fold1", -1, -1, word_list)
-    model_test(W_a_pn, b_a_pn, W_a_dt, b_a_dt, "C:/Users/lyum/PycharmProjects/NLP544/HW3/op_spam_training_data"
+    model_test(W_a_pn, b_a_pn, W_a_dt, b_a_dt, "op_spam_training_data"
                                                "/negative_polarity/truthful_from_Web/fold1", -1, 1, word_list)
 
     write_out(W_v_pn, b_v_pn, W_v_dt, b_v_dt, "vanillamodel",word_list)
