@@ -1,19 +1,29 @@
 import os
 import sys
 import string
+from sklearn.metrics import f1_score
+from nltk.corpus import stopwords
 
 # Global Var
 lable_class = [("negative", "deceptive"), ("negative", "truthful"), ("positive", "deceptive"), ("positive", "truthful")]
 lable_class2 = ["positive", "negative", "truthful", "deceptive"]
-stop_words = ["the", 'a', "to", "and", "or", " "]
+# stop_words = ["the", 'a', "to", "and", "or", "between", "an", "both", "but"]
+stop_words = list(stopwords.words('english'))
 
 
-# read the model first line is log prior, the rest are log prior likelihood for each word in the training set
 def read_model(path,lable_class):
+    """
+    read the model first line is log prior, the rest are log prior likelihood for each word in the training set
+    :param path: string, input file path
+    :param lable_class: list, lable_class for the model
+    :return: dict, log_prior,
+             dict, log_likelihood
+    """
     f = open(path, 'r')
     log_prior = {}
     log_likelihood = {}
 
+    # read log prior
     log_prior_line = f.readline().strip().split(",")
     for i in range(len(lable_class)):
         log_prior[lable_class[i]] = float(log_prior_line[i])
@@ -21,6 +31,7 @@ def read_model(path,lable_class):
     while True:
         line = f.readline()
         if line:
+            # read log likelihood
             log_likelihood_line = line.strip().split(",")
             word = log_likelihood_line[0]
             log_likelihood[word] = {}
@@ -32,8 +43,12 @@ def read_model(path,lable_class):
     return log_prior, log_likelihood
 
 
-# Tokenize the sentence into word list "I love you" -> ["I","love","you"]
 def process_reivew(review):
+    """
+    Tokenize the sentence into word list "I love you" -> ["I","love","you"]
+    :param review: string, a review sentence
+    :return: review_clean: string, tokenized review as a list of words
+    """
     review_split = review.strip().split(" ")
     # remove puncuation
     review_nopunc = [s.translate(str.maketrans('', '', string.punctuation)) for s in review_split]
@@ -46,8 +61,16 @@ def process_reivew(review):
     return review_clean
 
 
-# classify documents and write to output file
 def classify_single(output, path, log_prior, log_likelihood,lable_class):
+    """
+    classify documents and write to output file
+    :param output: string, output file
+    :param path: string, input directory path
+    :param logprior: dict, trained log prior for each class
+    :param loglikelihood: dict, trained log likelihood for each word
+    :param lable_class: list, list, lable_class for the model
+    :return: None
+    """
     for file in os.listdir(path):
         if os.path.isfile(os.path.join(path, file)):
             p = {}
@@ -87,6 +110,14 @@ def classify_single(output, path, log_prior, log_likelihood,lable_class):
 
 
 def classify_all(input, log_prior, log_likelihood, label_class):
+    """
+    classify all the files
+    :param input: string, input directory path
+    :param logprior: dict, trained log prior for each class
+    :param loglikelihood: dict, trained log likelihood for each word
+    :param lable_class: list, list, lable_class for the model
+    :return: None
+    """
     output = open("nboutput.txt", "w")
     for dir in os.listdir(input):
         if not os.path.isfile(os.path.join(input, dir)):
