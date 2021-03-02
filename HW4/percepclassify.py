@@ -10,6 +10,15 @@ stop_words = ["the", 'a', "to", "and", "or", "between", "an", "both", "but"]
 
 
 def read_model(path):
+    """
+    read the model from the model path
+    :param path: string, path to the model file
+    :return: word_list: list, list of words to train on
+             W_pn: weights for positive and negative labels
+             b_pn: bias for positive and negative labels
+             W_dt: weights for deceptive and truthful labels
+             b_dt: bias for deceptive and truthful labels
+    """
     f = open(path, "r")
     word_list = f.readline().strip().split(",")
     W_pn = [float(i) for i in f.readline().strip().split(",")]
@@ -21,6 +30,16 @@ def read_model(path):
 
 
 def classify_all(input, W_pn, b_pn, W_dt, b_dt, word_feature_list):
+    """
+    classify all files in the folder
+    :param input: string, input path to the folder
+    :param W_pn: weights for positive and negative labels
+    :param b_pn: bias for positive and negative labels
+    :param W_dt: weights for deceptive and truthful labels
+    :param b_dt: bias for deceptive and truthful labels
+    :param word_feature_list: list, list of words to train on
+    :return: None
+    """
     output = open("percepoutput.txt", "w")
     for dir in os.listdir(input):
         if not os.path.isfile(os.path.join(input, dir)):
@@ -35,10 +54,21 @@ def classify_all(input, W_pn, b_pn, W_dt, b_dt, word_feature_list):
 
 
 def classify_single(output, sub_fold_dir_path, W_pn, b_pn, W_dt, b_dt, word_feature_list):
+    """
+    classify all files in the folder, helper method
+    :param output: string, output path to write the predict label
+    :param sub_fold_dir_path: string, input path for the training folder path
+    :param W_pn: weights for positive and negative labels
+    :param b_pn: bias for positive and negative labels
+    :param W_dt: weights for deceptive and truthful labels
+    :param b_dt: bias for deceptive and truthful labels
+    :param word_feature_list: list, list of words to train on
+    :return: None
+    """
     label1 = ""
     label2 = ""
-    temp = [0 for i in range(1000)]
     for file in os.listdir(sub_fold_dir_path):
+        temp = [0 for i in range(1500)]
         f = open(os.path.join(sub_fold_dir_path, file))
         content = f.readlines()
         for line in content:
@@ -56,15 +86,19 @@ def classify_single(output, sub_fold_dir_path, W_pn, b_pn, W_dt, b_dt, word_feat
             label1 = "negative"
 
         if dt >= 0:
-            label2 = "trustful"
+            label2 = "truthful"
         else:
             label2 = "deceptive"
 
         output.write(label2 + " " + label1 + " " + os.path.join(sub_fold_dir_path, file) + "\n")
 
 
-# Tokenize the sentence into word list "I love you" -> ["I","love","you"]
 def process_reivew(review):
+    """
+    Tokenize the sentence into word list "I love you" -> ["I","love","you"]
+    :param review: string, a review sentence
+    :return: review_clean: string, tokenized review as a list of words
+    """
     review_split = review.strip().split(" ")
     # remove puncuation
     review_nopunc = [s.translate(str.maketrans('', '', string.punctuation)) for s in review_split]
