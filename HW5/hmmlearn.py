@@ -1,0 +1,75 @@
+import os
+import sys
+import numpy as np
+
+
+def create_dict(training_set_path):
+    f = open(training_set_path, "r", encoding='UTF-8')
+    lines = f.readlines()
+    emission_dict = {}
+    transition_dict = {}
+    tag_dict = {}
+    vocab = []
+
+    for line in lines:
+        word_seq = line.strip().split(" ")
+        prev_tag = "q0"
+        for i in range(len(word_seq)):
+            cur_word_tag = word_seq[i].split("/")
+            if len(cur_word_tag) > 2:
+                cur_word = "".join(cur_word_tag[0:-1])
+            else:
+                cur_word = cur_word_tag[0]
+
+            cur_tag = cur_word_tag[-1]
+
+            transition_dict[(prev_tag, cur_tag)] = transition_dict.get((prev_tag, cur_tag), 0) + 1
+            emission_dict[(cur_tag, cur_word)] = emission_dict.get((cur_tag, cur_word), 0) + 1
+            tag_dict[cur_word_tag[-1]] = tag_dict.get(cur_word_tag[-1], 0) + 1
+            if cur_word not in vocab:
+                vocab.append(cur_word)
+            prev_tag = cur_tag
+
+    return transition_dict, emission_dict, tag_dict, vocab
+
+
+def create_transition_matrix(transition_dict, tag_dict, alpha=1.0):
+    tag_seq = sorted(tag_dict.keys())
+    num_tag = len(tag_dict)
+
+    output = np.zeros((num_tag, num_tag))
+
+    for i in range(num_tag):
+        total = tag_dict[tag_seq[i]]
+        for j in range(num_tag):
+            transition_pair = (tag_seq[i], tag_seq[j])
+            transition_count = transition_dict.get(transition_pair, 0)
+            transition_p = (transition_count + alpha) / (total + alpha * num_tag)
+            output[i, j] = transition_p
+
+    return output
+
+
+def create_emission_matrix(emission_dict, tag_dict, vocab):
+    tag_seq = sorted(tag_dict.keys())
+    num_words = len(vocab)
+    num_tag = len(tag_dict)
+
+    output = np.zeros((num_tag, num_words))
+
+    for i in range(num_tag):
+        total = tag_dict[tag_seq[i]]
+        for j in range(num_words):
+            emission_pair = (tag_seq[i],vocab[j])
+            emission_count = emission_dict.get(emission_pair,0)
+            emission_p = float(emission_count)/float(total)
+            output[i, j] = emission_p
+
+    return output
+
+
+if __name__ == '__main__':
+    input = sys.argv[1]
+    transition_dict, emission_dict, tag_dict, vocab = create_dict(input)
+    transition_matrix = create_transition_matrix(transition_dict, tag_dict, 1)
+    emission_matrix = create_emission_matrix(emission_dict,tag_dict, vocab)
