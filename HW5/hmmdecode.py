@@ -34,6 +34,7 @@ def viterbi_forward(word_seq, transition_matrix, emission_matrix, tag_seq, vocab
     paths = np.zeros((num_tags, num_words))
 
     start_index = tag_seq.index("q0")
+    end_index = tag_seq.index("qN")
 
     for i in range(num_tags):
         transition_p = math.log(transition_matrix[start_index, i])
@@ -75,6 +76,13 @@ def viterbi_forward(word_seq, transition_matrix, emission_matrix, tag_seq, vocab
 
             probs[j, i] = best_prob
             paths[j, i] = best_path
+
+    for i in range(num_tags):
+        transition_p = math.log(transition_matrix[i, end_index])
+        if probs[i,-1] != 0:
+            probs[i, -1] += transition_p
+
+        probs[i, 0] = transition_p + emission_p
 
     return probs, paths
 
@@ -128,11 +136,8 @@ def predict(file_path, transition_matrix, emission_matrix, tag_seq, vocab):
 
 
 if __name__ == '__main__':
-    start = time.time()
     input = sys.argv[1]
     transition_matrix, emission_matrix, tag_seq, vocab = read_model()
     probs, paths = viterbi_forward(["Corriere","Sport","da","pagina","23","a","pagina","26"], transition_matrix, emission_matrix, tag_seq, vocab)
     pred_tag = viterbi_backward(["Corriere","Sport","da","pagina","23","a","pagina","26"], tag_seq, probs, paths)
     predict(input, transition_matrix, emission_matrix, tag_seq, vocab)
-    end = time.time()
-    print("time:", end - start)

@@ -31,6 +31,9 @@ def create_dict(training_set_path):
                 vocab.append(cur_word)
             prev_tag = cur_tag
 
+        transition_dict[(prev_tag, "qN")] = transition_dict.get((prev_tag, "qN"), 0) + 1
+        tag_dict["qN"] = tag_dict.get("qN", 0) + 1
+
     return transition_dict, emission_dict, tag_dict, vocab
 
 
