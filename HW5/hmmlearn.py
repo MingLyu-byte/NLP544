@@ -14,6 +14,7 @@ def create_dict(training_set_path):
     for line in lines:
         word_seq = line.strip().split(" ")
         prev_tag = "q0"
+        tag_dict[prev_tag] = tag_dict.get(prev_tag, 0) + 1
         for i in range(len(word_seq)):
             cur_word_tag = word_seq[i].split("/")
             if len(cur_word_tag) > 2:
@@ -60,16 +61,33 @@ def create_emission_matrix(emission_dict, tag_dict, vocab):
     for i in range(num_tag):
         total = tag_dict[tag_seq[i]]
         for j in range(num_words):
-            emission_pair = (tag_seq[i],vocab[j])
-            emission_count = emission_dict.get(emission_pair,0)
-            emission_p = float(emission_count)/float(total)
+            emission_pair = (tag_seq[i], vocab[j])
+            emission_count = emission_dict.get(emission_pair, 0)
+            emission_p = float(emission_count) / float(total)
             output[i, j] = emission_p
 
     return output
+
+
+def write_out_model(transition_matrix, emission_matrix, vocab, tag_dict):
+    tag_seq = sorted(tag_dict.keys())
+    f = open("hmmmodel.txt", "w", encoding='UTF-8')
+    f.write(" ".join(vocab) + "\n")
+    f.write(" ".join(tag_seq) + "\n")
+    transition_matrix = transition_matrix.tolist()
+    emission_matrix = emission_matrix.tolist()
+    for i in range(len(tag_seq)):
+        f.write(",".join([str(k) for k in transition_matrix[i]]) + "\n")
+
+    for i in range(len(tag_seq)):
+        f.write(",".join([str(k) for k in emission_matrix[i]]) + "\n")
 
 
 if __name__ == '__main__':
     input = sys.argv[1]
     transition_dict, emission_dict, tag_dict, vocab = create_dict(input)
     transition_matrix = create_transition_matrix(transition_dict, tag_dict, 1)
-    emission_matrix = create_emission_matrix(emission_dict,tag_dict, vocab)
+    print(transition_matrix.shape)
+    emission_matrix = create_emission_matrix(emission_dict, tag_dict, vocab)
+    print(emission_matrix.shape)
+    write_out_model(transition_matrix, emission_matrix, vocab, tag_dict)
