@@ -43,10 +43,11 @@ def viterbi_forward(word_seq, transition_matrix, emission_matrix, tag_seq, vocab
             emission_p = emission_matrix[i, vocab.index(word)]
             if emission_p != 0:
                 emission_p = math.log(emission_p)
+                probs[i, 0] = transition_p + emission_p
+            else:
+                probs[i, 0] = 0
         else:
-            emission_p = 0
-
-        probs[i, 0] = transition_p + emission_p
+            probs[i, 0] = transition_p
 
     for i in range(1, num_words):
         word = word_seq[i]
