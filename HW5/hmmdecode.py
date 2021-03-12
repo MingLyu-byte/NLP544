@@ -81,10 +81,10 @@ def viterbi_forward(word_seq, transition_matrix, emission_matrix, tag_seq, vocab
             probs[j, i] = best_prob
             paths[j, i] = best_path
 
-    # for i in range(num_tags):
-    #     transition_p = math.log(transition_matrix[i, end_index])
-    #     if probs[i, -1] != 0:
-    #         probs[i, -1] += transition_p
+    for i in range(num_tags):
+        transition_p = math.log(transition_matrix[i, end_index])
+        if probs[i, -1] != 0:
+            probs[i, -1] += transition_p
 
     return probs, paths
 
