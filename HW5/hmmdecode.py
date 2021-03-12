@@ -106,7 +106,7 @@ def viterbi_backward(word_seq, tag_seq, probs, paths):
 
     pred_tag[-1] = tag_seq[tag_index_seq[-1]]
 
-    for i in range(num_words - 1, -1, -1):
+    for i in range(num_words - 1, 0, -1):
         tag_index_seq[i - 1] = paths[int(tag_index_seq[i]), i]
         pred_tag[i - 1] = tag_seq[int(tag_index_seq[i - 1])]
 
