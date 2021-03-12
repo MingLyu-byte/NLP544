@@ -54,13 +54,13 @@ def viterbi_forward(word_seq, transition_matrix, emission_matrix, tag_seq, vocab
 
         for j in range(num_tags):
             best_prob = float("-inf")
-            best_path = -1
+            best_path = None
 
             if word in vocab:
                 emission_p = emission_matrix[j, vocab.index(word)]
                 if emission_p == 0:
-                    best_prob = 0
-                    best_path = -1
+                    best_prob = float("-inf")
+                    best_path = None
                 else:
                     emission_p = math.log(emission_p)
                     for k in range(num_tags):
@@ -94,7 +94,6 @@ def viterbi_backward(word_seq, tag_seq, probs, paths):
     num_words = len(word_seq)
     tag_index_seq = [None] * num_words
     pred_tag = [None] * num_words
-
     best_prob = float("-inf")
 
     for i in range(num_tags):
@@ -121,7 +120,6 @@ def predict(file_path, transition_matrix, emission_matrix, tag_seq, vocab):
     f.close()
     count = 0
     for line in lines:
-        print(count)
         word_seq = line.strip().split(" ")
         probs, paths = viterbi_forward(word_seq, transition_matrix, emission_matrix, tag_seq, vocab)
         pred_tag = viterbi_backward(word_seq, tag_seq, probs, paths)
@@ -133,16 +131,15 @@ def predict(file_path, transition_matrix, emission_matrix, tag_seq, vocab):
                 temp = temp + word_seq[i] + "/" + pred_tag[i] + " "
 
         output.write(temp)
-        count += 1
     output.close()
 
 
 if __name__ == '__main__':
     input = sys.argv[1]
     transition_matrix, emission_matrix, tag_seq, vocab = read_model()
-    probs, paths = viterbi_forward(["Corriere", "Sport", "da", "pagina", "23", "a", "pagina", "26"], transition_matrix,
-                                   emission_matrix, tag_seq, vocab)
-    pred_tag = viterbi_backward(["Corriere", "Sport", "da", "pagina", "23", "a", "pagina", "26"], tag_seq, probs, paths)
+    # probs, paths = viterbi_forward( ["Ecco", "l", "arringa", "di", "Tiziana", "Maiolo", "."], transition_matrix,
+    #                                emission_matrix, tag_seq, vocab)
+    # pred_tag = viterbi_backward( ["Ecco", "l", "arringa", "di", "Tiziana", "Maiolo", "."], tag_seq, probs, paths)
     start = time.time()
     predict(input, transition_matrix, emission_matrix, tag_seq, vocab)
     end = time.time()
