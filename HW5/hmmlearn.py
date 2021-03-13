@@ -17,12 +17,10 @@ def create_dict(training_set_path):
         tag_dict[prev_tag] = tag_dict.get(prev_tag, 0) + 1
         for i in range(len(word_seq)):
             cur_word_tag = word_seq[i].split("/")
-            if len(cur_word_tag) > 2:
-                cur_word = "".join(cur_word_tag[0:-1])
-            else:
-                cur_word = cur_word_tag[0]
-
             cur_tag = cur_word_tag[-1]
+            start_find_index = len(word_seq[i]) - len(cur_tag)
+            cur_tag_index = word_seq[i].find(cur_tag,start_find_index)
+            cur_word = str(word_seq[i][:cur_tag_index - 1])
 
             transition_dict[(prev_tag, cur_tag)] = transition_dict.get((prev_tag, cur_tag), 0) + 1
             emission_dict[(cur_tag, cur_word)] = emission_dict.get((cur_tag, cur_word), 0) + 1
