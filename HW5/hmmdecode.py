@@ -45,7 +45,7 @@ def viterbi_forward(word_seq, transition_matrix, emission_matrix, tag_seq, vocab
                 emission_p = math.log(emission_p)
                 probs[i, 0] = transition_p + emission_p
             else:
-                probs[i, 0] = 0
+                probs[i, 0] = float("-inf")
         else:
             probs[i, 0] = transition_p
 
@@ -64,7 +64,7 @@ def viterbi_forward(word_seq, transition_matrix, emission_matrix, tag_seq, vocab
                 else:
                     emission_p = math.log(emission_p)
                     for k in range(num_tags):
-                        if probs[k, i - 1] == 0:
+                        if probs[k, i - 1] == float("-inf"):
                             continue
                         else:
                             prob = probs[k, i - 1] + math.log(transition_matrix[k, j]) + emission_p
@@ -135,8 +135,8 @@ def predict(file_path, transition_matrix, emission_matrix, tag_seq, vocab):
 
 
 def evaluate():
-    f1 = open("hmmoutput.txt", "r",encoding='UTF-8')
-    f2 = open("hmm-training-data/it_isdt_dev_tagged.txt", "r",encoding='UTF-8')
+    f1 = open("hmmoutput.txt", "r", encoding='UTF-8')
+    f2 = open("hmm-training-data/it_isdt_dev_tagged.txt", "r", encoding='UTF-8')
     lines1 = f1.readlines()
     lines2 = f2.readlines()
     f1.close()
@@ -157,8 +157,8 @@ def evaluate():
 if __name__ == '__main__':
     input = sys.argv[1]
     transition_matrix, emission_matrix, tag_seq, vocab = read_model()
-    # start = time.time()
-    # predict(input, transition_matrix, emission_matrix, tag_seq, vocab)
-    # end = time.time()
-    # print(end - start)
+    start = time.time()
+    predict(input, transition_matrix, emission_matrix, tag_seq, vocab)
+    end = time.time()
+    print(end - start)
     evaluate()
