@@ -26,7 +26,7 @@ def create_dict(training_set_path):
 
             transition_dict[(prev_tag, cur_tag)] = transition_dict.get((prev_tag, cur_tag), 0) + 1
             emission_dict[(cur_tag, cur_word)] = emission_dict.get((cur_tag, cur_word), 0) + 1
-            tag_dict[cur_word_tag[-1]] = tag_dict.get(cur_word_tag[-1], 0) + 1
+            tag_dict[cur_tag] = tag_dict.get(cur_tag, 0) + 1
             if cur_word not in vocab:
                 vocab.append(cur_word)
             prev_tag = cur_tag
@@ -37,7 +37,7 @@ def create_dict(training_set_path):
     return transition_dict, emission_dict, tag_dict, vocab
 
 
-def create_transition_matrix(transition_dict, tag_dict, alpha=1.0):
+def create_transition_matrix(transition_dict, tag_dict, alpha=1):
     tag_seq = sorted(tag_dict.keys())
     num_tag = len(tag_dict)
 
@@ -84,6 +84,7 @@ def write_out_model(transition_matrix, emission_matrix, vocab, tag_dict):
 
     for i in range(len(tag_seq)):
         f.write(",".join([str(k) for k in emission_matrix[i]]) + "\n")
+    f.close()
 
 
 if __name__ == '__main__':
