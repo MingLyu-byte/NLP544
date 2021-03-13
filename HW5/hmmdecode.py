@@ -83,7 +83,7 @@ def viterbi_forward(word_seq, transition_matrix, emission_matrix, tag_seq, vocab
 
     for i in range(num_tags):
         transition_p = math.log(transition_matrix[i, end_index])
-        if probs[i, -1] != 0:
+        if probs[i, -1] != float("-inf"):
             probs[i, -1] += transition_p
 
     return probs, paths
@@ -97,7 +97,7 @@ def viterbi_backward(word_seq, tag_seq, probs, paths):
     best_prob = float("-inf")
 
     for i in range(num_tags):
-        if probs[i, -1] == 0:
+        if probs[i, -1] == float("-inf"):
             continue
 
         if probs[i, -1] > best_prob:
