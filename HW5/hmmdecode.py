@@ -134,13 +134,31 @@ def predict(file_path, transition_matrix, emission_matrix, tag_seq, vocab):
     output.close()
 
 
+def evaluate():
+    f1 = open("hmmoutput.txt", "r",encoding='UTF-8')
+    f2 = open("hmm-training-data/it_isdt_dev_tagged.txt", "r",encoding='UTF-8')
+    lines1 = f1.readlines()
+    lines2 = f2.readlines()
+    f1.close()
+    f2.close()
+    total = 0
+    correct = 0
+    for i in range(len(lines1)):
+        predict = [k.split("/")[-1] for k in lines1[i].strip().split(" ")]
+        answer = [k.split("/")[-1] for k in lines2[i].strip().split(" ")]
+        total += len(predict)
+        for j in range(len(predict)):
+            if predict[j] == answer[j]:
+                correct += 1
+
+    print("accuracy:", float(correct) / total)
+
+
 if __name__ == '__main__':
     input = sys.argv[1]
     transition_matrix, emission_matrix, tag_seq, vocab = read_model()
-    # probs, paths = viterbi_forward( ["Ecco", "l", "arringa", "di", "Tiziana", "Maiolo", "."], transition_matrix,
-    #                                emission_matrix, tag_seq, vocab)
-    # pred_tag = viterbi_backward( ["Ecco", "l", "arringa", "di", "Tiziana", "Maiolo", "."], tag_seq, probs, paths)
-    start = time.time()
-    predict(input, transition_matrix, emission_matrix, tag_seq, vocab)
-    end = time.time()
-    print(end - start)
+    # start = time.time()
+    # predict(input, transition_matrix, emission_matrix, tag_seq, vocab)
+    # end = time.time()
+    # print(end - start)
+    evaluate()
