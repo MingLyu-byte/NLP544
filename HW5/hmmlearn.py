@@ -9,6 +9,7 @@ def create_dict(training_set_path):
     emission_dict = {}
     transition_dict = {}
     tag_dict = {}
+    tag_open_dict = {}
     vocab = []
 
     for line in lines:
@@ -19,7 +20,7 @@ def create_dict(training_set_path):
             cur_word_tag = word_seq[i].split("/")
             cur_tag = cur_word_tag[-1]
             start_find_index = len(word_seq[i]) - len(cur_tag)
-            cur_tag_index = word_seq[i].find(cur_tag,start_find_index)
+            cur_tag_index = word_seq[i].find(cur_tag, start_find_index)
             cur_word = str(word_seq[i][:cur_tag_index - 1])
 
             transition_dict[(prev_tag, cur_tag)] = transition_dict.get((prev_tag, cur_tag), 0) + 1
@@ -27,12 +28,18 @@ def create_dict(training_set_path):
             tag_dict[cur_tag] = tag_dict.get(cur_tag, 0) + 1
             if cur_word not in vocab:
                 vocab.append(cur_word)
+            if cur_tag not in tag_open_dict:
+                tag_open_dict[cur_tag] = {cur_word}
+            else:
+                if cur_word not in tag_open_dict[cur_tag]:
+                    tag_open_dict[cur_tag].add(cur_word)
+
             prev_tag = cur_tag
 
         transition_dict[(prev_tag, "qN")] = transition_dict.get((prev_tag, "qN"), 0) + 1
         tag_dict["qN"] = tag_dict.get("qN", 0) + 1
 
-    return transition_dict, emission_dict, tag_dict, vocab
+    return transition_dict, emission_dict, tag_dict, vocab, tag_open_dict
 
 
 def create_transition_matrix(transition_dict, tag_dict, alpha=1):
@@ -70,11 +77,32 @@ def create_emission_matrix(emission_dict, tag_dict, vocab):
     return output
 
 
-def write_out_model(transition_matrix, emission_matrix, vocab, tag_dict):
+def create_open_set(tag_open_dict, n):
+    tag_open_dict_length = {}
+    for tag in tag_open_dict:
+        tag_open_dict_length[tag] = len(tag_open_dict[tag])
+    vocab_len = sum(tag_open_dict_length.values())
+    tag_open_dict_percent = {tag : tag_open_dict_length[tag]/float(vocab_len) for tag in tag_open_dict_length}
+    tag_open = sorted(tag_open_dict_percent, key=tag_open_dict_percent.get, reverse=True)
+
+    tag_open_return = []
+    cumulative = 0
+    for i in range(len(tag_open)):
+        print(cumulative)
+        cumulative += tag_open_dict_percent[tag_open[i]]
+        tag_open_return.append(tag_open[i])
+        if cumulative >= n:
+            break
+
+    return tag_open_return
+
+
+def write_out_model(transition_matrix, emission_matrix, vocab, tag_dict, tag_open):
     tag_seq = sorted(tag_dict.keys())
     f = open("hmmmodel.txt", "w", encoding='UTF-8')
     f.write(" ".join(vocab) + "\n")
     f.write(" ".join(tag_seq) + "\n")
+    f.write(" ".join(tag_open) + "\n")
     transition_matrix = transition_matrix.tolist()
     emission_matrix = emission_matrix.tolist()
     for i in range(len(tag_seq)):
@@ -87,9 +115,10 @@ def write_out_model(transition_matrix, emission_matrix, vocab, tag_dict):
 
 if __name__ == '__main__':
     input = sys.argv[1]
-    transition_dict, emission_dict, tag_dict, vocab = create_dict(input)
+    transition_dict, emission_dict, tag_dict, vocab, tag_open_dict = create_dict(input)
     transition_matrix = create_transition_matrix(transition_dict, tag_dict, 1)
+    tag_open = create_open_set(tag_open_dict,0.9)
     print(transition_matrix.shape)
     emission_matrix = create_emission_matrix(emission_dict, tag_dict, vocab)
     print(emission_matrix.shape)
-    write_out_model(transition_matrix, emission_matrix, vocab, tag_dict)
+    write_out_model(transition_matrix, emission_matrix, vocab, tag_dict,tag_open)

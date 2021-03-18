@@ -145,7 +145,7 @@ def predict(file_path, transition_matrix, emission_matrix, tag_seq, vocab, tag_o
 
 def evaluate():
     f1 = open("hmmoutput.txt", "r", encoding='UTF-8')
-    f2 = open("hmm-training-data/it_isdt_dev_tagged.txt", "r", encoding='UTF-8')
+    f2 = open("hmm-training-data/ja_gsd_dev_tagged.txt", "r", encoding='UTF-8')
     lines1 = f1.readlines()
     lines2 = f2.readlines()
     f1.close()
