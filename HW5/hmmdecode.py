@@ -1,4 +1,3 @@
-import random
 import sys
 import numpy as np
 import math
@@ -10,14 +9,16 @@ def read_model():
     lines = f.readlines()
     vocab = lines[0].strip().split(" ")
     tag_seq = lines[1].strip().split(" ")
+    tag_open = lines[2].strip().split(" ")
+
     num_tag = len(tag_seq)
     transition_matrix = []
     emission_matrix = []
 
-    for i in range(2, 2 + num_tag):
+    for i in range(3, 3 + num_tag):
         transition_matrix.append([float(k) for k in lines[i].strip().split(",")])
 
-    for i in range(2 + num_tag, 2 + num_tag * 2):
+    for i in range(3 + num_tag, 3 + num_tag * 2):
         emission_matrix.append([float(k) for k in lines[i].strip().split(",")])
 
     transition_matrix = np.array(transition_matrix)
@@ -25,20 +26,10 @@ def read_model():
     print("transition_matrix dimension:", transition_matrix.shape)
     print("emission_matrix dimension:", emission_matrix.shape)
 
-    return transition_matrix, emission_matrix, tag_seq, vocab
+    return transition_matrix, emission_matrix, tag_seq, vocab, tag_open
 
 
-def select(values):
-    variate = random.random() * sum(values.values())
-    cumulative = 0.0
-    for item, weight in values.items():
-        cumulative += weight
-        if variate < cumulative:
-            return item
-    return item
-
-
-def viterbi_forward(word_seq, transition_matrix, emission_matrix, tag_seq, vocab):
+def viterbi_forward(word_seq, transition_matrix, emission_matrix, tag_seq, vocab, tag_open):
     num_tags = len(tag_seq)
     num_words = len(word_seq)
     probs = np.zeros((num_tags, num_words))
@@ -58,7 +49,10 @@ def viterbi_forward(word_seq, transition_matrix, emission_matrix, tag_seq, vocab
             else:
                 probs[i, 0] = float("-inf")
         else:
-            probs[i, 0] = transition_p
+            if tag_seq[i] in tag_open:
+                probs[i, 0] = transition_p
+            else:
+                probs[i, 0] = float("-inf")
 
     for i in range(1, num_words):
         word = word_seq[i]
@@ -84,7 +78,11 @@ def viterbi_forward(word_seq, transition_matrix, emission_matrix, tag_seq, vocab
                     if probs[k, i - 1] == float("-inf"):
                         continue
                     else:
-                        prob = probs[k, i - 1] + math.log(transition_matrix[k, j])
+                        if tag_seq[j] in tag_open:
+                            prob = probs[k, i - 1] + math.log(transition_matrix[k, j])
+                        else:
+                            prob = float("-inf")
+
                         if prob > best_prob:
                             best_prob = prob
                             best_path = k
@@ -124,7 +122,7 @@ def viterbi_backward(word_seq, tag_seq, probs, paths):
     return pred_tag
 
 
-def predict(file_path, transition_matrix, emission_matrix, tag_seq, vocab):
+def predict(file_path, transition_matrix, emission_matrix, tag_seq, vocab, tag_open):
     f = open(file_path, "r", encoding='UTF-8')
     output = open("hmmoutput.txt", "w", encoding='UTF-8')
     lines = f.readlines()
@@ -132,7 +130,7 @@ def predict(file_path, transition_matrix, emission_matrix, tag_seq, vocab):
     count = 0
     for line in lines:
         word_seq = line.strip().split(" ")
-        probs, paths = viterbi_forward(word_seq, transition_matrix, emission_matrix, tag_seq, vocab)
+        probs, paths = viterbi_forward(word_seq, transition_matrix, emission_matrix, tag_seq, vocab, tag_open)
         pred_tag = viterbi_backward(word_seq, tag_seq, probs, paths)
         temp = ""
         for i in range(len(word_seq)):
@@ -167,9 +165,9 @@ def evaluate():
 
 if __name__ == '__main__':
     input = sys.argv[1]
-    transition_matrix, emission_matrix, tag_seq, vocab = read_model()
+    transition_matrix, emission_matrix, tag_seq, vocab, tag_open = read_model()
     start = time.time()
-    predict(input, transition_matrix, emission_matrix, tag_seq, vocab)
+    predict(input, transition_matrix, emission_matrix, tag_seq, vocab, tag_open)
     end = time.time()
     print(end - start)
     evaluate()
