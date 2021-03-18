@@ -1,3 +1,4 @@
+import random
 import sys
 import numpy as np
 import math
@@ -25,6 +26,16 @@ def read_model():
     print("emission_matrix dimension:", emission_matrix.shape)
 
     return transition_matrix, emission_matrix, tag_seq, vocab
+
+
+def select(values):
+    variate = random.random() * sum(values.values())
+    cumulative = 0.0
+    for item, weight in values.items():
+        cumulative += weight
+        if variate < cumulative:
+            return item
+    return item
 
 
 def viterbi_forward(word_seq, transition_matrix, emission_matrix, tag_seq, vocab):

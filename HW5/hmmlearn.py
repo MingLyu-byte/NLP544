@@ -19,7 +19,7 @@ def create_dict(training_set_path):
             cur_word_tag = word_seq[i].split("/")
             cur_tag = cur_word_tag[-1]
             start_find_index = len(word_seq[i]) - len(cur_tag)
-            cur_tag_index = word_seq[i].find(cur_tag,start_find_index)
+            cur_tag_index = word_seq[i].find(cur_tag, start_find_index)
             cur_word = str(word_seq[i][:cur_tag_index - 1])
 
             transition_dict[(prev_tag, cur_tag)] = transition_dict.get((prev_tag, cur_tag), 0) + 1
@@ -68,6 +68,12 @@ def create_emission_matrix(emission_dict, tag_dict, vocab):
             output[i, j] = emission_p
 
     return output
+
+
+def find_open_set(tag_dict, n):
+    tag_seq_reverse = sorted(tag_dict.keys(), by=tag_dict.get, reverse=True)[0:n]
+    tag_seq_reverse_prob = [tag_dict[tag_seq_reverse[i]] for i in range(len(tag_seq_reverse))]
+    return tag_seq_reverse, tag_seq_reverse_prob
 
 
 def write_out_model(transition_matrix, emission_matrix, vocab, tag_dict):
